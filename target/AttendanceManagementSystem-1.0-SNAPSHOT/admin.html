@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f4ef">
+    <title>Admin — Daymark</title>
+    <link rel="stylesheet" href="assets/app.css">
+</head>
+<body class="admin-page">
+    <header class="topbar">
+        <a class="brand" href="./">
+            <span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 4.5v11.8l7.6 4.4"/><circle cx="16" cy="16" r="11.5"/></svg></span>
+            <span>daymark<span class="brand-period">.</span></span>
+        </a>
+        <div class="topbar-right">
+            <a class="button button-quiet" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg> Back to check-in</a>
+            <button class="button button-quiet" id="logout-button" type="button" hidden>Sign out <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5m5 5H3m9-9h6a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-6"/></svg></button>
+        </div>
+    </header>
+
+    <main class="admin-shell">
+        <section id="login-view" class="login-wrap" hidden>
+            <div class="login-decoration"><div class="login-orb"></div><span class="login-mini-mark">d.</span><p>Everything in its<br><strong>right time.</strong></p><span class="login-decoration-note">DAYMARK ADMINISTRATION</span></div>
+            <form id="login-form" class="login-card">
+                <span class="eyebrow"><span class="eyebrow-dot"></span> ADMIN ACCESS</span>
+                <h1>Welcome<br>back.</h1>
+                <p>Sign in to manage your team and attendance records.</p>
+                <label for="admin-password">Admin password</label>
+                <div class="password-field"><input id="admin-password" type="password" name="password" autocomplete="current-password" required><button id="toggle-password" type="button" aria-label="Show password">Show</button></div>
+                <button class="button button-green login-submit" type="submit"><span>Sign in</span><span aria-hidden="true">→</span></button>
+                <p class="form-error" id="login-error" role="alert" hidden></p>
+                <a class="login-back" href="./">← Return to employee check-in</a>
+            </form>
+        </section>
+
+        <section id="dashboard-view" hidden>
+            <div class="dashboard-heading">
+                <div><span class="eyebrow"><span class="eyebrow-dot"></span> YOUR WORKSPACE</span><h1>Good things,<br><span>well organized.</span></h1></div>
+                <div class="dashboard-date"><span>YOUR ATTENDANCE OVERVIEW</span><strong id="dashboard-date"></strong></div>
+            </div>
+            <div class="stats-grid">
+                <article class="stat-card stat-primary"><span class="stat-label">ON SITE TODAY</span><div><strong id="stat-onsite">0</strong><span class="stat-symbol">↗</span></div><p>Employees currently checked in</p></article>
+                <article class="stat-card"><span class="stat-label">TODAY’S PUNCHES</span><div><strong id="stat-punches">0</strong><span class="stat-icon">◷</span></div><p>Check-ins and check-outs today</p></article>
+                <article class="stat-card"><span class="stat-label">YOUR PEOPLE</span><div><strong id="stat-employees">0</strong><span class="stat-icon">⌁</span></div><p>Employees in your workspace</p></article>
+            </div>
+
+            <section class="panel employee-panel">
+                <div class="panel-heading"><div><span class="eyebrow">GROWING TOGETHER</span><h2>Your team</h2><p>Add a teammate and we’ll make them a unique code.</p></div>
+                    <button class="button button-dark" id="show-employee-form" type="button"><span aria-hidden="true">＋</span> Add employee</button>
+                </div>
+                <form id="employee-create-form" class="employee-create-form" hidden>
+                    <label>Name<input name="name" type="text" maxlength="120" placeholder="e.g. Alex Morgan" required></label>
+                    <label>Department<input name="department" type="text" maxlength="120" placeholder="e.g. Design" required></label>
+                    <label>Email <span class="optional-label">OPTIONAL</span><input name="email" type="email" maxlength="180" placeholder="alex@company.com"></label>
+                    <button class="button button-green" type="submit">Create employee <span aria-hidden="true">→</span></button>
+                    <button class="text-button cancel-create" id="cancel-employee-form" type="button">Cancel</button>
+                    <p id="employee-create-error" class="form-error" role="alert" hidden></p>
+                    <div id="created-employee" class="created-employee" hidden></div>
+                </form>
+                <div id="employee-list" class="employee-list"></div>
+            </section>
+
+            <section class="panel attendance-panel">
+                <div class="panel-heading attendance-heading"><div><span class="eyebrow">THE PAPER TRAIL, WITHOUT THE PAPER</span><h2>Attendance records</h2><p>Filter your team’s punches by employee, day, and time.</p></div>
+                    <button class="button button-outline refresh-button" id="refresh-records" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5m-4.1-2a7 7 0 0 1 12-3L20 12M4 12l3.1 4a7 7 0 0 0 12-3"/></svg> Refresh</button>
+                </div>
+                <form id="filters" class="filters">
+                    <label>EMPLOYEE<select name="employee" id="filter-employee"><option value="">Everyone</option></select></label>
+                    <label>DAY<input type="date" name="date" id="filter-date"></label>
+                    <label>AFTER<input type="time" name="from"></label>
+                    <label>BEFORE<input type="time" name="to"></label>
+                    <button class="button button-green" type="submit">Apply filters</button>
+                    <button class="text-button clear-filters" id="clear-filters" type="button">Clear</button>
+                </form>
+                <div class="table-scroll">
+                    <table class="attendance-table">
+                        <thead><tr><th>EMPLOYEE</th><th>DEPARTMENT</th><th>EVENT</th><th>DATE &amp; TIME</th><th>PHOTO</th></tr></thead>
+                        <tbody id="attendance-rows"><tr><td class="empty-state" colspan="5">Loading records…</td></tr></tbody>
+                    </table>
+                </div>
+                <div class="table-footer"><span id="record-count">Showing your latest records</span><span>Photos are only accessible to signed-in admins.</span></div>
+            </section>
+            <p id="dashboard-error" class="form-error dashboard-error" role="alert" hidden></p>
+        </section>
+    </main>
+
+    <dialog id="photo-dialog" class="photo-dialog">
+        <div class="photo-dialog-head"><div><span class="eyebrow">ATTENDANCE PHOTO</span><h2 id="photo-caption"></h2></div><button id="close-photo" class="dialog-close" type="button" aria-label="Close photo">×</button></div>
+        <img id="full-photo" alt="Full attendance photo">
+    </dialog>
+    <script src="assets/admin.js" defer></script>
+</body>
+</html>

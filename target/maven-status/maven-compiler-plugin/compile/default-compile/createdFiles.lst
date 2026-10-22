@@ -1,0 +1,5 @@
+com\mycompany\attendancemanagementsystem\AdminPassword.class
+com\mycompany\attendancemanagementsystem\AttendanceServlet.class
+com\mycompany\attendancemanagementsystem\JakartaRestConfiguration.class
+com\mycompany\attendancemanagementsystem\resources\JakartaEE11Resource.class
+com\mycompany\attendancemanagementsystem\Database.class
