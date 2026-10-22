@@ -287,7 +287,10 @@ async function readResponse(response) {
     try {
         data = await response.json();
     } catch {
-        throw new Error("The server returned an unexpected response. Please try again.");
+        if (response.status >= 500) {
+            throw new Error(`The attendance server returned an error (${response.status}). Check the MySQL setup and try again.`);
+        }
+        throw new Error(`The server returned an unexpected response (${response.status}). Please try again.`);
     }
     if (!response.ok) throw new Error(data.error || "Something went wrong. Please try again.");
     return data;

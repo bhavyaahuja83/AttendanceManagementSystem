@@ -35,7 +35,7 @@ document.querySelector("#login-form").addEventListener("submit", async (event) =
     button.disabled = true;
     hideLoginError();
     try {
-        await api("api/admin/login", { method: "POST", body: new FormData(form) });
+        await api("api/admin/login", { method: "POST", body: new URLSearchParams(new FormData(form)) });
         form.reset();
         showDashboard();
         await loadDashboard();
@@ -85,7 +85,10 @@ document.querySelector("#employee-create-form").addEventListener("submit", async
     const errorBox = document.querySelector("#employee-create-error");
     errorBox.hidden = true;
     try {
-        const employee = await api("api/admin/employees", { method: "POST", body: new FormData(form) });
+        const employee = await api("api/admin/employees", {
+            method: "POST",
+            body: new URLSearchParams(new FormData(form))
+        });
         const created = document.querySelector("#created-employee");
         created.replaceChildren();
         const message = document.createElement("span");
@@ -303,8 +306,15 @@ async function api(url, options = {}) {
     try {
         data = await response.json();
     } catch {
-        throw new Error("The server returned an unexpected response. Please try again.");
+        throw new Error(serverErrorMessage(response.status));
     }
     if (!response.ok) throw new Error(data.error || "Something went wrong. Please try again.");
     return data;
+}
+
+function serverErrorMessage(status) {
+    if (status >= 500) {
+        return `The attendance server returned an error (${status}). Verify the MySQL setup and restart the app.`;
+    }
+    return `The server returned an unexpected response (${status}). Please try again.`;
 }

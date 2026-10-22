@@ -36,13 +36,15 @@ public class AttendanceServlet extends HttpServlet {
     private static final int MAX_PHOTO_BYTES = 5 * 1024 * 1024;
     private static final DateTimeFormatter DATE_TIME_FORMAT =
             DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
+    private boolean databaseReady;
 
     @Override
     public void init() throws ServletException {
         try {
-            Database.initialize();
+            Database.initialize(getServletContext().getRealPath("/"));
+            databaseReady = true;
         } catch (SQLException exception) {
-            throw new ServletException("Unable to initialize the attendance database.", exception);
+            log("Attendance database is unavailable; database API endpoints will return a JSON error.", exception);
         }
     }
 
@@ -52,6 +54,8 @@ public class AttendanceServlet extends HttpServlet {
             String path = request.getPathInfo();
             if ("/session".equals(path)) {
                 json(response, "{\"authenticated\":" + isAdmin(request) + "}");
+            } else if (!requireDatabase(response)) {
+                return;
             } else if ("/employee".equals(path)) {
                 findEmployee(request, response);
             } else if ("/admin/employees".equals(path)) {
@@ -86,6 +90,8 @@ public class AttendanceServlet extends HttpServlet {
                 login(request, response);
             } else if ("/admin/logout".equals(path)) {
                 logout(request, response);
+            } else if (!requireDatabase(response)) {
+                return;
             } else if ("/admin/employees".equals(path)) {
                 if (requireAdmin(request, response)) {
                     createEmployee(request, response);
@@ -240,7 +246,7 @@ public class AttendanceServlet extends HttpServlet {
             String eventType = "IN";
             try (PreparedStatement latest = connection.prepareStatement(
                     "SELECT event_type FROM attendance WHERE employee_id = ? AND CAST(recorded_at AS DATE) = ? "
-                    + "ORDER BY recorded_at DESC, id DESC FETCH FIRST 1 ROW ONLY")) {
+                    + "ORDER BY recorded_at DESC, id DESC LIMIT 1")) {
                 latest.setLong(1, employeeId);
                 latest.setDate(2, Date.valueOf(now.toLocalDate()));
                 try (ResultSet result = latest.executeQuery()) {
@@ -313,7 +319,7 @@ public class AttendanceServlet extends HttpServlet {
             jsonError(response, HttpServletResponse.SC_BAD_REQUEST, "Choose a valid time range.");
             return;
         }
-        sql.append(" ORDER BY a.recorded_at DESC, a.id DESC FETCH FIRST 500 ROWS ONLY");
+        sql.append(" ORDER BY a.recorded_at DESC, a.id DESC LIMIT 500");
         List<String> rows = new ArrayList<>();
         try (Connection connection = Database.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql.toString())) {
@@ -387,6 +393,15 @@ public class AttendanceServlet extends HttpServlet {
             return true;
         }
         jsonError(response, HttpServletResponse.SC_UNAUTHORIZED, "Please sign in as an admin first.");
+        return false;
+    }
+
+    private boolean requireDatabase(HttpServletResponse response) throws IOException {
+        if (databaseReady) {
+            return true;
+        }
+        jsonError(response, HttpServletResponse.SC_SERVICE_UNAVAILABLE,
+                "Attendance database is unavailable. Check MySQL settings and run database/schema.sql.");
         return false;
     }
 
